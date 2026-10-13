@@ -44,6 +44,8 @@ namespace olympia
         MAVIS_UID_VSETIVLI,
         MAVIS_UID_VSETVLI,
         MAVIS_UID_VSETVL,
+        MAVIS_UID_VLM,
+        MAVIS_UID_VSM,
         MAVIS_UID_VMV1R,
         MAVIS_UID_VMV2R,
         MAVIS_UID_VMV4R,
@@ -53,7 +55,8 @@ namespace olympia
         MAVIS_UID_VZEXTVF4,
         MAVIS_UID_VSEXTVF4,
         MAVIS_UID_VZEXTVF8,
-        MAVIS_UID_VSEXTVF8
+        MAVIS_UID_VSEXTVF8,
+        MAVIS_UID_VRGATHEREI16
     };
 
     // This is a sparta tree node wrapper around the Mavis facade object
@@ -109,6 +112,8 @@ namespace olympia
             { "vsetivli", MAVIS_UID_VSETIVLI},
             { "vsetvli",  MAVIS_UID_VSETVLI},
             { "vsetvl",   MAVIS_UID_VSETVL},
+            {"vlm.v",     MAVIS_UID_VLM},
+            {"vsm.v",     MAVIS_UID_VSM},
             {"vmv1r.v",   MAVIS_UID_VMV1R},
             {"vmv2r.v",   MAVIS_UID_VMV2R},
             {"vmv4r.v",   MAVIS_UID_VMV4R},
@@ -118,8 +123,9 @@ namespace olympia
             {"vzext.vf4", MAVIS_UID_VZEXTVF4},
             {"vsext.vf4", MAVIS_UID_VSEXTVF4},
             {"vzext.vf8", MAVIS_UID_VZEXTVF8},
-            {"vsext.vf8", MAVIS_UID_VSEXTVF8}
-	};
+            {"vsext.vf8", MAVIS_UID_VSEXTVF8},
+            {"vrgatherei16.vv", MAVIS_UID_VRGATHEREI16}
+        };
 
         const std::string          pseudo_file_path_; ///< Path to olympia pseudo ISA/uArch JSON files
         const mavis::extension_manager::riscv::RISCVExtensionManager ext_man_;

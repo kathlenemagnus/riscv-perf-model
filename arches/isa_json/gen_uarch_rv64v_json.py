@@ -9,84 +9,83 @@ import os
 import json
 
 MAVIS = os.environ.get('MAVIS', "../../mavis/")
-JSON  = os.environ.get('JSON', "olympia_uarch_rv64v.json")
 
-SUPPORTED_INSTS = {
+SUPPORTED_VECTOR_INSTS = {
 # Vector Config Setting Instructions
     "vsetvli"  : {"pipe" : "vset", "latency" : 1},
     "vsetvl"   : {"pipe" : "vset", "latency" : 1},
     "vsetivli" : {"pipe" : "vset", "latency" : 1},
 
 # Vector Loads and Stores: Vector Unit-Stride Instructions
-    "vle8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vle16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vle32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vle64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vse8.v"  : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vse16.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vse32.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vse64.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vlm.v"   : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsm.v"   : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vle8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vle16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vle32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vle64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
+    "vse8.v"  : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vse16.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vse32.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vse64.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
+    "vlm.v"   : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vsm.v"   : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
 
 # Vector Loads and Stores: Vector Strided Instructions
-    "vlse8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vlse16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vlse32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vlse64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsse8.v"  : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsse16.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsse32.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsse64.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vlse8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vlse16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vlse32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vlse64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
+    "vsse8.v"  : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vsse16.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vsse32.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vsse64.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
 
 # Vector Loads and Stores: Vector Indexed Instructions
-    "vluxei8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vluxei16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vluxei32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vluxei64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vloxei8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vloxei16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vloxei32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vloxei64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsuxei8.v"  : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsuxei16.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsuxei32.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsuxei64.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsoxei8.v"  : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsoxei16.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsoxei32.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vsoxei64.v" : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vluxei8.v"  : {"pipe" : "vload", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 8},
+    "vluxei16.v" : {"pipe" : "vload", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 16},
+    "vluxei32.v" : {"pipe" : "vload", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 32},
+    "vluxei64.v" : {"pipe" : "vload", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 64},
+    "vloxei8.v"  : {"pipe" : "vload", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 8},
+    "vloxei16.v" : {"pipe" : "vload", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 16},
+    "vloxei32.v" : {"pipe" : "vload", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 32},
+    "vloxei64.v" : {"pipe" : "vload", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 64},
+    "vsuxei8.v"  : {"pipe" : "vstore", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 8},
+    "vsuxei16.v" : {"pipe" : "vstore", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 16},
+    "vsuxei32.v" : {"pipe" : "vstore", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 32},
+    "vsuxei64.v" : {"pipe" : "vstore", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 64},
+    "vsoxei8.v"  : {"pipe" : "vstore", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 8},
+    "vsoxei16.v" : {"pipe" : "vstore", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 16},
+    "vsoxei32.v" : {"pipe" : "vstore", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 32},
+    "vsoxei64.v" : {"pipe" : "vstore", "uop_gen" : "INDEX_LDST", "latency" : 1, "eew" : 64},
 
 # Vector Loads and Stores: Unit-stride Fault-Only-First Loads
-    "vle8ff.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vle16ff.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vle32ff.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vle64ff.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vle8ff.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vle16ff.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vle32ff.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vle64ff.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
 
 # Vector Loads and Stores: Vector Load/Store Segment Instructions
 # Encoded in Mavis as other vector load and store instructions with the NF field set to 2+
 
 # Vector Loads and Stores: Vector Load/Store Whole Register Instructions
-    "vl1re8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl1re16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl1re32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl1re64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl2re8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl2re16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl2re32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl2re64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl4re8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl4re16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl4re32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl4re64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl8re8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl8re16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl8re32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vl8re64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vs1r.v"    : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vs2r6.v"   : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vs4r.v"    : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
-    "vs8r.v"    : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1},
+    "vl1re8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vl1re16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vl1re32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vl1re64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
+    "vl2re8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vl2re16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vl2re32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vl2re64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
+    "vl4re8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vl4re16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vl4re32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vl4re64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
+    "vl8re8.v"  : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vl8re16.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 16},
+    "vl8re32.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 32},
+    "vl8re64.v" : {"pipe" : "vload", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 64},
+    "vs1r.v"    : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vs2r.v"    : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vs4r.v"    : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
+    "vs8r.v"    : {"pipe" : "vstore", "uop_gen" : "ELEMENTWISE", "latency" : 1, "eew" : 8},
 
 # Vector Integer Arithmetic Instructions: Vector Single-Width Integer Add and Subtract
     "vadd.vv"  : {"pipe" : "vint", "uop_gen" : "ELEMENTWISE", "latency" : 1},
@@ -343,7 +342,7 @@ SUPPORTED_INSTS = {
     "vfmadd.vv"  : {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
     "vfmadd.vf"  : {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
     "vfnmadd.vv" : {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
-    "vfnmadd.vv" : {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
+    "vfnmadd.vf" : {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
     "vfmsub.vv"  : {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
     "vfmsub.vf"  : {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
     "vfnmsub.vv" : {"pipe" : "vfmul", "uop_gen" : "ELEMENTWISE", "latency" : 6},
@@ -384,16 +383,16 @@ SUPPORTED_INSTS = {
     "vfsgnjx.vf" : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
 
 # Vector Floating-Point Instructions: Vector Floating-Point Compare Instructions
-    "vmfeq.vv"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmfeq.vf"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmfne.vv"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmfne.vf"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmflt.vv"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmflt.vf"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmfle.vv"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmfle.vf"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmfgt.vf"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
-    "vmfgte.vf" : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 2},
+    "vmfeq.vv"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmfeq.vf"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmfne.vv"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmfne.vf"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmflt.vv"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmflt.vf"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmfle.vv"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmfle.vf"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmfgt.vf"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
+    "vmfge.vf"  : {"pipe" : "vfloat", "uop_gen" : "SINGLE_DEST", "latency" : 2},
 
 # Vector Floating-Point Instructions: Vector Floating-Point Classify Instruction
     "vfclass.v" : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 1},
@@ -418,7 +417,7 @@ SUPPORTED_INSTS = {
     "vfwcvt.rtz.xu.f.v" : {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
     "vfwcvt.rtz.x.f.v"  : {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
     "vfwcvt.f.xu.v"     : {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
-    "vfwcvt.f.xu.v"     : {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
+    "vfwcvt.f.x.v"      : {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
     "vfwcvt.f.f.v"      : {"pipe" : "vfloat", "uop_gen" : "WIDENING", "latency" : 6},
 
 # Vector Floating-Point Instructions: Narrowing Floating-Point/Integer Type-Convert Instructions
@@ -432,28 +431,28 @@ SUPPORTED_INSTS = {
     "vfncvt.rod.f.f.w"  : {"pipe" : "vfloat", "uop_gen" : "ELEMENTWISE", "latency" : 3},
 
 # Vector Reduction Operations: Vector Single-Width Integer Reduction Instructions
-    "vredsum.vs"        : {"pipe" : "vint", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vredmaxu.vs"       : {"pipe" : "vint", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vredmax.vs"        : {"pipe" : "vint", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vrednminu.vs"      : {"pipe" : "vint", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vredmin.vs"        : {"pipe" : "vint", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vredand.vs"        : {"pipe" : "vint", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vredor.vs"         : {"pipe" : "vint", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vredxor.vs"        : {"pipe" : "vint", "uop_gen" : "REDUCTION", "latency" : 2},
+    "vredsum.vs"        : {"pipe" : "vint", "uop_gen" : "RED", "latency" : 2},
+    "vredmaxu.vs"       : {"pipe" : "vint", "uop_gen" : "RED", "latency" : 2},
+    "vredmax.vs"        : {"pipe" : "vint", "uop_gen" : "RED", "latency" : 2},
+    "vredminu.vs"       : {"pipe" : "vint", "uop_gen" : "RED", "latency" : 2},
+    "vredmin.vs"        : {"pipe" : "vint", "uop_gen" : "RED", "latency" : 2},
+    "vredand.vs"        : {"pipe" : "vint", "uop_gen" : "RED", "latency" : 2},
+    "vredor.vs"         : {"pipe" : "vint", "uop_gen" : "RED", "latency" : 2},
+    "vredxor.vs"        : {"pipe" : "vint", "uop_gen" : "RED", "latency" : 2},
 
 # Vector Reduction Operations: Vector Widening Integer Reduction Instructions
-    "vwredsumu.vs"      : {"pipe" : "vint", "uop_gen" : "REDUCTION_WIDE", "latency" : 2},
-    "vwredsum.vs"       : {"pipe" : "vint", "uop_gen" : "REDUCTION_WIDE", "latency" : 2},
+    "vwredsumu.vs"      : {"pipe" : "vint", "uop_gen" : "RED_WIDE", "latency" : 2},
+    "vwredsum.vs"       : {"pipe" : "vint", "uop_gen" : "RED_WIDE", "latency" : 2},
 
 # Vector Reduction Operations: Vector Single-Width Floating-Point Reduction Instructions
-    "vfredosum.vs"      : {"pipe" : "vfloat", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vfredusum.vs"      : {"pipe" : "vfloat", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vfredmax.vs"       : {"pipe" : "vfloat", "uop_gen" : "REDUCTION", "latency" : 2},
-    "vfredmin.vs"       : {"pipe" : "vfloat", "uop_gen" : "REDUCTION", "latency" : 2},
+    "vfredosum.vs"      : {"pipe" : "vfloat", "uop_gen" : "RED", "latency" : 2},
+    "vfredusum.vs"      : {"pipe" : "vfloat", "uop_gen" : "RED", "latency" : 2},
+    "vfredmax.vs"       : {"pipe" : "vfloat", "uop_gen" : "RED", "latency" : 2},
+    "vfredmin.vs"       : {"pipe" : "vfloat", "uop_gen" : "RED", "latency" : 2},
 
 # Vector Reduction Operations: Vector Widening Floating-Point Reduction Instructions
-    "vfwredosum.vs"     : {"pipe" : "vfloat", "uop_gen" : "REDUCTION_WIDE", "latency" : 2},
-    "vfwredusum.vs"     : {"pipe" : "vfloat", "uop_gen" : "REDUCTION_WIDE", "latency" : 2},
+    "vfwredosum.vs"     : {"pipe" : "vfloat", "uop_gen" : "RED_WIDE", "latency" : 2},
+    "vfwredusum.vs"     : {"pipe" : "vfloat", "uop_gen" : "RED_WIDE", "latency" : 2},
 
 # Vector Mask Instructions: Vector Mask-Register Logical Instructions
     "vmandn.mm" : {"pipe" : "vmask", "uop_gen" : "NONE", "latency" : 1},
@@ -468,16 +467,16 @@ SUPPORTED_INSTS = {
 # Vector Mask Instructions: Vector count population in mask vcpop.m
     "vcpop.m" : {"pipe" : "v2s", "uop_gen" : "NONE", "latency" : 1},
 
-# Vector Mask Instructions: vfirst nd-rst-set mask bit
+# Vector Mask Instructions: vfirst find-first-set mask bit
     "vfirst.m" : {"pipe" : "v2s", "uop_gen" : "NONE", "latency" : 1},
 
-# Vector Mask Instructions: vmsbf.m set-before-rst mask bit
+# Vector Mask Instructions: vmsbf.m set-before-first mask bit
     "vmsbf.m" : {"pipe" : "vmask", "uop_gen" : "NONE", "latency" : 1},
 
-# Vector Mask Instructions: vmsif.m set-including-rst mask bit
+# Vector Mask Instructions: vmsif.m set-including-first mask bit
     "vmsif.m" : {"pipe" : "vmask", "uop_gen" : "NONE", "latency" : 1},
 
-# Vector Mask Instructions: vmsof.m set-only-rst mask bit
+# Vector Mask Instructions: vmsof.m set-only-first mask bit
     "vmsof.m" : {"pipe" : "vmask", "uop_gen" : "NONE", "latency" : 1},
 
 # Vector Mask Instructions: Vector Iota Instruction
@@ -495,10 +494,10 @@ SUPPORTED_INSTS = {
     "vfmv.s.f" : {"pipe" : "vmv", "uop_gen" : "NONE", "latency" : 1},
 
 # Vector Permutation Instructions: Vector Slide Instructions
-    "vslideup.vx"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE",    "latency" : 6},
-    "vslideup.vi"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE",    "latency" : 6},
-    "vslidedown.vx"  : {"pipe" : "vpermute", "uop_gen" : "PERMUTE",    "latency" : 6},
-    "vslidedown.vi"  : {"pipe" : "vpermute", "uop_gen" : "PERMUTE",    "latency" : 6},
+    "vslideup.vx"    : {"pipe" : "vpermute", "uop_gen" : "SLIDE",    "latency" : 6},
+    "vslideup.vi"    : {"pipe" : "vpermute", "uop_gen" : "SLIDE",    "latency" : 6},
+    "vslidedown.vx"  : {"pipe" : "vpermute", "uop_gen" : "SLIDE",    "latency" : 6},
+    "vslidedown.vi"  : {"pipe" : "vpermute", "uop_gen" : "SLIDE",    "latency" : 6},
     "vslide1up.vx"   : {"pipe" : "vint",     "uop_gen" : "SLIDE1UP",   "latency" : 1},
     "vfslide1up.vf"  : {"pipe" : "vfloat",   "uop_gen" : "SLIDE1UP",   "latency" : 1},
     "vslide1down.vx" : {"pipe" : "vint",     "uop_gen" : "SLIDE1DOWN", "latency" : 1},
@@ -506,7 +505,7 @@ SUPPORTED_INSTS = {
 
 # Vector Permutation Instructions: Vector Register Gather Instructions
     "vrgather.vv"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
-    "vrgatherei16.vv": {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
+    "vrgatherei16.vv": {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6, "eew" : 16},
     "vrgather.vx"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
     "vrgather.vi"    : {"pipe" : "vpermute", "uop_gen" : "PERMUTE", "latency" : 6},
 
@@ -520,42 +519,56 @@ SUPPORTED_INSTS = {
     "vmv8r.v" : {"pipe" : "vmv", "uop_gen" : "ELEMENTWISE", "latency" : 1},
 }
 
-# Get a list of all vector insts from Mavis
-mavis_rv64v_json = []
-with open(MAVIS+"json/isa_rv64v.json", "r") as f:
-    mavis_rv64v_json.extend(json.load(f))
-with open(MAVIS+"json/isa_rv64vf.json", "r") as f:
-    mavis_rv64v_json.extend(json.load(f))
 
-# Sort alphabetically by mnemonic
-mavis_rv64v_json.sort(key=lambda opcode: opcode["mnemonic"])
+def write_uarch_json(insts, filename):
+    # Get a list of all vector insts from Mavis
+    mavis_rv64v_json = []
+    with open(MAVIS+"json/isa_rv64zve32f.json", "r") as f:
+        mavis_rv64v_json.extend(json.load(f))
+    with open(MAVIS+"json/isa_rv64zve32x.json", "r") as f:
+        mavis_rv64v_json.extend(json.load(f))
+    with open(MAVIS+"json/isa_rv64zve64d.json", "r") as f:
+        mavis_rv64v_json.extend(json.load(f))
+    with open(MAVIS+"json/isa_rv64zve64x.json", "r") as f:
+        mavis_rv64v_json.extend(json.load(f))
 
-# Construct the uarch json
-uarch_json = []
-for opcode in mavis_rv64v_json:
-    mnemonic = opcode["mnemonic"]
+    # Sort alphabetically by mnemonic
+    mavis_rv64v_json.sort(key=lambda opcode: opcode["mnemonic"])
 
-    # Assume inst is unsupported
-    opcode_entry = {
-        "mnemonic" : mnemonic,
-        "pipe" : "?",
-        "uop_gen" : "NONE",
-        "latency" : 0
-    }
+    # Construct the uarch json
+    uarch_json = []
+    for opcode in mavis_rv64v_json:
+        mnemonic = opcode["mnemonic"]
 
-    # If it is supported, get the pipe and latency
-    if mnemonic in SUPPORTED_INSTS.keys():
-        opcode_entry["mnemonic"] = mnemonic
-        opcode_entry["pipe"] = SUPPORTED_INSTS[mnemonic]["pipe"]
-        if(SUPPORTED_INSTS[mnemonic].get("uop_gen")):
-            opcode_entry["uop_gen"] = SUPPORTED_INSTS[mnemonic]["uop_gen"]
-        opcode_entry["pipe"] = SUPPORTED_INSTS[mnemonic]["pipe"]
-        opcode_entry["latency"] = SUPPORTED_INSTS[mnemonic]["latency"]
+        # Assume inst is unsupported
+        opcode_entry = {
+            "mnemonic" : mnemonic,
+            "pipe" : "?",
+            "uop_gen" : "NONE",
+            "latency" : 0
+        }
 
-    uarch_json.append(opcode_entry)
+        # If it is supported, get the pipe and latency
+        if mnemonic in insts.keys():
+            opcode_entry["mnemonic"] = mnemonic
+            opcode_entry["pipe"] = insts[mnemonic]["pipe"]
+            if(insts[mnemonic].get("uop_gen")):
+                opcode_entry["uop_gen"] = insts[mnemonic]["uop_gen"]
+            opcode_entry["latency"] = insts[mnemonic]["latency"]
+            if(insts[mnemonic].get("eew")):
+                opcode_entry["eew"] = insts[mnemonic]["eew"]
 
-# Write the json to the file
-with open(JSON, "w") as f:
-    print("Writing rv64v uarch json to "+JSON)
-    json.dump(uarch_json, f, indent=4)
+        uarch_json.append(opcode_entry)
 
+    # Write the json to the file
+    with open(filename, "w") as f:
+        print("Writing rv64v uarch json to "+filename)
+        json.dump(uarch_json, f, indent=4)
+
+
+def main():
+    write_uarch_json(SUPPORTED_VECTOR_INSTS, "olympia_uarch_rv64v.json")
+
+
+if __name__ == "__main__":
+    main()

@@ -8,6 +8,7 @@
 #include <algorithm>
 #include "fetch/Fetch.hpp"
 #include "InstGenerator.hpp"
+#include "CoreUtils.hpp"
 #include "decode/MavisUnit.hpp"
 #include "OlympiaAllocators.hpp"
 
@@ -65,10 +66,13 @@ namespace olympia
         auto cpu_node   = getContainer()->getParent()->getParent();
         auto extension  = sparta::notNull(cpu_node->getExtension("simulation_configuration"));
         auto workload   = extension->getParameters()->getParameter("workload");
+
+        const uint32_t vlen = coreutils::getCoreExtensions(cpu_node)->getParameterAs<uint32_t>("vlen");
         inst_generator_ = InstGenerator::createGenerator(info_logger_,
                                                          getMavis(getContainer()),
                                                          workload->getValueAsString(),
-                                                         skip_nonuser_mode_);
+                                                         skip_nonuser_mode_,
+                                                         vlen);
 
         ev_fetch_insts->schedule(1);
     }
@@ -262,10 +266,10 @@ namespace olympia
         // No longer speculative
         // speculative_path_ = false;
 
-	// Fix for Issue #254
-	// It is possible that we do not have any external trigger to restart
-	// fetch, so force bootstrap it like when initialized
-	ev_fetch_insts->schedule(1);
+        // Fix for Issue #254
+        // It is possible that we do not have any external trigger to restart
+        // fetch, so force bootstrap it like when initialized
+        ev_fetch_insts->schedule(1);
     }
 
     void Fetch::onROBTerminate_(const bool & stopped)

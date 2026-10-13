@@ -1,11 +1,10 @@
 [
     {
-        "mnemonic": "vsetivli",
-        "rs1": 5,
+        "mnemonic": "vsetvli",
+        "rs1": 2,
         "rd": 1,
-        "vtype": "0x3",
-        "vl": 1000,
-        "vta": 0
+        "vtype": "0x50",
+        "comment": "lmul=1, sew=32, vl=vlmax, vta"
     },
     {
         "mnemonic": "vadd.vv",

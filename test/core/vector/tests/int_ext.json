@@ -2,24 +2,22 @@
   {
     "mnemonic": "vsetivli",
     "rd": 0,
-    "imm": 256,
     "vtype": "0x1b",
-    "vl": 128,
-    "vta": 0
+    "comment": "lmul=8, sew=64, vl=vlmax"
   },
   {
     "mnemonic": "vzext.vf2",
-    "vd": 4,
+    "vd": 16,
     "vs2": 8
   },
   {
     "mnemonic": "vzext.vf4",
-    "vd": 4,
+    "vd": 16,
     "vs2": 8
   },
   {
     "mnemonic": "vzext.vf8",
-    "vd": 4,
+    "vd": 16,
     "vs2": 8
   }
 ]

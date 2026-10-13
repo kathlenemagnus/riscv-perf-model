@@ -132,6 +132,9 @@ namespace olympia
 
             //! Vector tail agnostic, default is undisturbed
             PARAMETER(bool, init_vta, 0, "vector tail agnostic")
+
+	    //! Vector mask agnostic, default is undisturbed
+            PARAMETER(bool, init_vma, 0, "vector mask agnostic")
         };
 
         /**
@@ -331,15 +334,16 @@ namespace olympia
 
         //////////////////////////////////////////////////////////////////////
         // Vector
-        const bool vector_enabled_;
-        VectorConfigPtr vector_config_;
+        const uint32_t vlen_;
 
-        bool waiting_on_vset_;
+        // Vector configs from vset instructions.
+        std::deque<std::pair<uint32_t, vector_types::VectorGlobalConfig>> vec_global_config_;
 
         // Helper method to get the current vector config
-        void updateVectorConfig_(const InstPtr &);
+        void updateVectorGlobalConfigFromVset_(const InstPtr &);
 
-        uint32_t getNumVecUopsRemaining() const;
+	// Blocking vset
+        sparta::utils::ValidValue<InstPtr> blocking_vset_inst_;
 
         sparta::Counter vset_blocking_count_;
         sparta::Counter vset_blocking_stall_latency_;

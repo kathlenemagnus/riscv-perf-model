@@ -28,6 +28,7 @@ add_library(core
   CPU.cpp
   CPUFactory.cpp
   CPUTopology.cpp
+  CoreUtils.cpp
 )
 
 add_library(instgen

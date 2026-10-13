@@ -3,8 +3,7 @@
         "mnemonic": "vsetivli",
         "rd": 0,
         "vtype": "0x12",
-        "vl": 128,
-        "vta": 0
+        "comment": "lmul=4, sew=32, vl=vlmax"
     },
     {
         "mnemonic": "viota.m",

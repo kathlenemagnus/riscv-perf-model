@@ -74,12 +74,14 @@ namespace olympia
         {"NARROWING", InstArchInfo::UopGenType::NARROWING},
         {"MAC", InstArchInfo::UopGenType::MAC},
         {"MAC_WIDE", InstArchInfo::UopGenType::MAC_WIDE},
-        {"REDUCTION", InstArchInfo::UopGenType::REDUCTION},
-        {"REDUCTION_WIDE", InstArchInfo::UopGenType::REDUCTION_WIDE},
+        {"RED", InstArchInfo::UopGenType::RED},
+        {"RED_WIDE", InstArchInfo::UopGenType::RED_WIDE},
         {"INT_EXT", InstArchInfo::UopGenType::INT_EXT},
         {"SLIDE1UP", InstArchInfo::UopGenType::SLIDE1UP},
         {"SLIDE1DOWN", InstArchInfo::UopGenType::SLIDE1DOWN},
+        {"SLIDE", InstArchInfo::UopGenType::SLIDE},
         {"PERMUTE", InstArchInfo::UopGenType::PERMUTE},
+        {"INDEX_LDST", InstArchInfo::UopGenType::INDEX_LDST},
         {"NONE", InstArchInfo::UopGenType::NONE}};
 
     void InstArchInfo::update(const boost::json::object & jobj)
@@ -107,6 +109,11 @@ namespace olympia
                           "Unknown uop gen: " << uop_gen_name << " for inst: "
                                               << jobj.at("mnemonic").as_string());
             uop_gen_ = itr->second;
+        }
+
+        if (const auto it = jobj.find("eew"); it != jobj.end())
+        {
+            eew_ = boost::json::value_to<uint32_t>(it->value());
         }
 
         is_load_store_ = (tgt_pipe_ == TargetPipe::LSU);

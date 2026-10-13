@@ -1,0 +1,45 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "imm": 256,
+    "vtype": "0x12",
+    "comment": "lmul=4, sew=32, vl=vlmax"
+  },
+  {
+    "mnemonic": "vslide1up.vx",
+    "vd": 8,
+    "vs2": 4,
+    "rs1": 1
+  },
+  {
+    "mnemonic": "vslide1down.vx",
+    "vd": 8,
+    "vs2": 4,
+    "rs1": 1
+  },
+  {
+    "mnemonic": "vslideup.vx",
+    "vd": 8,
+    "vs2": 4,
+    "rs1": 1
+  },
+  {
+    "mnemonic": "vslidedown.vx",
+    "vd": 8,
+    "vs2": 4,
+    "rs1": 1
+  },
+  {
+    "mnemonic": "vslideup.vi",
+    "vd": 8,
+    "vs2": 4,
+    "imm": 1
+  },
+  {
+    "mnemonic": "vslidedown.vi",
+    "vd": 8,
+    "vs2": 4,
+    "imm": 1
+  }
+]

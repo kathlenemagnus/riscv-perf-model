@@ -5,7 +5,11 @@
 #include "sparta/simulation/Unit.hpp"
 #include "sparta/simulation/TreeNode.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
+#include "sparta/pevents/PeventCollector.hpp"
 
+#include "vector/VectorSequencer.hpp"
+
+#include "InstArchInfo.hpp"
 #include "Inst.hpp"
 #include "FlushManager.hpp"
 #include "decode/MavisUnit.hpp"
@@ -22,27 +26,14 @@ namespace olympia
     class VectorUopGenerator : public sparta::Unit
     {
       public:
-        class Modifier
-        {
-          public:
-            Modifier(std::string name, uint32_t value) : name_{name}, data_{value} {}
-
-            std::string getName() const { return name_; }
-
-            uint32_t getValue() const { return data_; }
-
-            void setValue(uint32_t newValue) { data_ = newValue; }
-
-          private:
-            std::string name_;
-            uint32_t data_;
-        };
-
         //! \brief Parameters for VectorUopGenerator model
         class VectorUopGeneratorParameterSet : public sparta::ParameterSet
         {
           public:
             VectorUopGeneratorParameterSet(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
+
+            PARAMETER(bool, generate_tail_uops, false,
+                      "Ignore VL and generate all uops even if they only contain tail elements")
 
             //! \brief Generate uops for widening vector instructions with two dests
             // PARAMETER(bool, widening_dual_dest, false,
@@ -64,7 +55,7 @@ namespace olympia
 
         InstPtr generateUop();
 
-        uint64_t getNumUopsRemaining() const { return num_uops_to_generate_; }
+        uint64_t getNumUopsRemaining() const { return uops_.size() - num_uops_generated_; }
 
         void handleFlush(const FlushManager::FlushingCriteria &);
 
@@ -73,51 +64,30 @@ namespace olympia
 
         MavisType* mavis_facade_;
 
-        typedef std::function<const InstPtr(VectorUopGenerator*)> UopGenFunctionType;
-        typedef std::map<InstArchInfo::UopGenType, UopGenFunctionType> UopGenFunctionMapType;
-        UopGenFunctionMapType uop_gen_function_map_;
+        VectorSequencer sequencer_;
 
         sparta::utils::ValidValue<InstPtr> current_inst_;
-        std::vector<Modifier> current_inst_modifiers_;
 
-        sparta::Counter vuops_generated_;
+        std::vector<VectorSequencer::UopInfo> uops_;
 
-        uint64_t num_uops_to_generate_ = 0;
         uint64_t num_uops_generated_ = 0;
-
-        template <InstArchInfo::UopGenType Type> InstPtr generateUops_();
-
-        template <InstArchInfo::UopGenType Type> InstPtr generateSlideUops_();
-
-        InstPtr generatePermuteUops_();
-
-        InstPtr makeInst_(const mavis::OperandInfo::ElementList & srcs,
-                          const mavis::OperandInfo::ElementList & dests);
 
         void reset_()
         {
             current_inst_.clearValid();
-            current_inst_modifiers_.clear();
-            num_uops_to_generate_ = 0;
+            uops_.clear();
             num_uops_generated_ = 0;
         }
 
-        void addModifier(const std::string & name, uint32_t value)
-        {
-            current_inst_modifiers_.emplace_back(name, value);
-        }
+        sparta::Counter vuops_generated_;
 
-        std::optional<uint32_t> getModifier(const std::string & name)
-        {
-            for (auto & m : current_inst_modifiers_)
-            {
-                if (m.getName() == name)
-                {
-                    return m.getValue();
-                }
-            }
-            return {};
-        }
+        sparta::pevents::PeventCollector<InstPEventPairs> vec_seq_inst_event_;
+        sparta::pevents::PeventCollector<InstPEventPairs> vec_seq_uop_event_;
+
+        InstPtr makeInst_(const InstPtr & inst, const VectorSequencer::UopInfo &);
+
+        // Completion callback for vector uops (see Retire::completionCallback_)
+        void completionCallback_(Inst* inst);
 
         // Dump debug content on failure
         void dumpDebugContent_(std::ostream & output) const override final;

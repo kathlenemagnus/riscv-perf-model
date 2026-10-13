@@ -14,14 +14,17 @@
 
 namespace olympia::coreutils
 {
+    sparta::ParameterSet* getCoreExtensions(sparta::TreeNode* node);
+
     inline auto getPipeTopology(sparta::TreeNode* node, const std::string & pipe_name)
     {
-        auto core_extension = node->getExtension(olympia::CoreExtensions::name);
-        auto core_extension_params = sparta::notNull(core_extension)->getParameters();
+        auto core_extension_params = getCoreExtensions(node);
         auto pipe_topology_param = sparta::notNull(core_extension_params)->getParameter(pipe_name);
         return sparta::notNull(pipe_topology_param)
             ->getValueAs<olympia::CoreExtensions::PipeTopology>();
     }
+
+    uint32_t getVlenDlenRatio(sparta::TreeNode* node);
 
     inline core_types::RegFile determineRegisterFile(const mavis::OperandInfo::Element & reg)
     {

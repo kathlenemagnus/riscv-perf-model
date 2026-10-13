@@ -4,11 +4,10 @@
     "rd": 0,
     "imm": 256,
     "vtype": "0x12",
-    "vl": 128,
-    "vta": 0
+    "comment": "lmul=4, sew=32, vl=vlmax"
   },
   {
-    "mnemonic": "vwmacc.vv",
+    "mnemonic": "vwmul.vv",
     "vd": 12,
     "vs2": 4,
     "vs1": 8

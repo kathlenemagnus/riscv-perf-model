@@ -80,7 +80,7 @@ namespace olympia
                 {
                     // The number of non-tail elements in the uop is used to determine how many
                     // passes are needed
-                    const VectorConfigPtr & vector_config = ex_inst->getVectorConfig();
+                    const vector_types::VectorGlobalConfig* vector_config = ex_inst->getVectorGlobalConfig();
                     const uint32_t num_elems_per_uop =
                         vector_config->getVLMAX() / vector_config->getLMUL();
                     const uint32_t num_elems_remaining =
@@ -137,7 +137,7 @@ namespace olympia
             if (ex_inst->isVset() && ex_inst->isBlockingVSET())
             {
                 // sending back VSET CSRs
-                const VectorConfigPtr & vector_config = ex_inst->getVectorConfig();
+                const vector_types::VectorGlobalConfig* vector_config = ex_inst->getVectorGlobalConfig();
                 ILOG("Forwarding VSET CSRs back to decode, LMUL: "
                      << vector_config->getLMUL() << " SEW: " << vector_config->getSEW()
                      << " VTA: " << vector_config->getVTA() << " VL: " << vector_config->getVL());

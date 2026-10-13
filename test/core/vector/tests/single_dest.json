@@ -4,13 +4,12 @@
     "rd": 0,
     "imm": 256,
     "vtype": "0x12",
-    "vl": 128,
-    "vta": 0
+    "comment": "lmul=4, sew=32, vl=vlmax"
   },
   {
-    "mnemonic": "vnclipu.wv",
+    "mnemonic": "vmseq.vv",
     "vd": 0,
-    "vs2": 8,
-    "vs1": 16
+    "vs2": 4,
+    "vs1": 8
   }
 ]

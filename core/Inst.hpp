@@ -16,7 +16,7 @@
 
 #include "InstArchInfo.hpp"
 #include "CoreTypes.hpp"
-#include "vector/VectorConfig.hpp"
+#include "vector/VectorTypes.hpp"
 #include "MiscUtils.hpp"
 #include "rename/RenameData.hpp"
 
@@ -183,22 +183,71 @@ namespace olympia
 
         sparta::memory::addr_t getTargetVAddr() const { return target_vaddr_; }
 
-        void setVectorConfig(const VectorConfigPtr input_vector_config)
+        void setVectorGlobalConfig(const vector_types::VectorGlobalConfig & vec_global_config)
         {
-            vector_config_ = input_vector_config;
+            vec_global_config_ = vec_global_config;
         }
 
-        const VectorConfigPtr getVectorConfig() const { return vector_config_; }
+        const vector_types::VectorGlobalConfig* getVectorGlobalConfig() const
+        {
+            return vec_global_config_ ? &vec_global_config_.value() : nullptr;
+        }
 
-        VectorConfigPtr getVectorConfig() { return vector_config_; }
+        float getEMUL() const
+        {
+            const auto & vec_config = getVectorGlobalConfig();
+            const uint32_t sew = vec_config->getSEW();
+            const float lmul = vec_config->getLMUL();
+            return (getEEW() / sew) * lmul;
+        }
 
-        void setTail(bool has_tail) { has_tail_ = has_tail; }
+        void initVectorInstState(const uint32_t start_elem_num,
+                                 const boost::dynamic_bitset<> & active_elem_mask,
+                                 const uint32_t dlen_idx)
+        {
+            vec_inst_state_.reset(
+                new vector_types::VectorInstState(start_elem_num, active_elem_mask, dlen_idx));
+        }
 
-        bool hasTail() const { return has_tail_; }
+        vector_types::VectorInstStatePtr getVectorInstState() { return vec_inst_state_; }
 
-        void setUOpParent(WeakPtrType & parent_uop) { parent_uop_ = parent_uop; }
+        const vector_types::VectorInstStatePtr getVectorInstState() const
+        {
+            return vec_inst_state_;
+        }
 
-        WeakPtrType getUOpParent() { return parent_uop_; }
+        void setNfields(const uint32_t nfields)
+        {
+            sparta_assert((nfields > 0) && (nfields <= 8),
+                          "Invalid value for nfields: " << nfields);
+            nfields_ = nfields;
+        }
+
+        uint32_t getNfields() const { return nfields_; }
+
+        void setUOpParent(const WeakPtrType & uop_parent) { uop_parent_ = uop_parent; }
+
+        WeakPtrType getUOpParent() { return uop_parent_; }
+
+        const WeakPtrType getUOpParent() const { return uop_parent_; }
+
+        void setNumVectorUOps(const uint32_t num_vec_uops) { num_vec_uops_ = num_vec_uops; }
+
+        uint32_t getNumVectorUOps() const { return num_vec_uops_; }
+
+        void addUOpChild(const Inst::PtrType & child_uop, const uint32_t uopid)
+        {
+            sparta_assert(uopid < num_vec_uops_,
+                          "Uop ID is not valid! Did you call Inst::setNumVectorUOps first?");
+            child_uops_[uopid] = child_uop;
+        }
+
+        const Inst::PtrType & getUOpChild(const uint32_t uopid) const
+        {
+            return child_uops_.at(uopid);
+        }
+
+        Inst::PtrType & getUOpChild(const uint32_t uopid) { return child_uops_.at(uopid); }
 
         // Branch instruction was taken (always set for JAL/JALR)
         void setTakenBranch(bool taken) { is_taken_branch_ = taken; }
@@ -287,6 +336,8 @@ namespace olympia
             return opcode_info_->getSpecialField(sfid);
         }
 
+        const auto & getSpecialFields() const { return opcode_info_->getSpecialFields(); }
+
         bool getVectorMaskEnabled() const
         {
             try
@@ -362,6 +413,8 @@ namespace olympia
         uint32_t getExecuteTime() const { return inst_arch_info_->getExecutionTime(); }
 
         InstArchInfo::UopGenType getUopGenType() const { return inst_arch_info_->getUopGenType(); }
+
+        uint32_t getEEW() const { return inst_arch_info_->getEEW(); }
 
         uint64_t getRAdr() const { return target_vaddr_ | 0x8000000; } // faked
 
@@ -512,15 +565,19 @@ namespace olympia
         // Vector
         const bool is_vector_;
         const bool is_vector_whole_reg_;
-
-        VectorConfigPtr vector_config_{new VectorConfig};
-        bool has_tail_ = false; // Does this vector uop have a tail?
+        std::optional<vector_types::VectorGlobalConfig> vec_global_config_;
+        vector_types::VectorInstStatePtr vec_inst_state_;
+        // Used for vector load/store
+        uint32_t nfields_ = 0;
 
         // blocking vset is a vset that needs to read a value from a register value. A blocking vset
         // can't be resolved until after execution, so we need to block on it due to UOp fracturing
         bool is_blocking_vset_ = false;
 
-        sparta::SpartaWeakPointer<olympia::Inst> parent_uop_;
+        // Vector sequencing
+        WeakPtrType uop_parent_;
+        uint32_t num_vec_uops_ = 0;
+        std::array<Inst::PtrType, InstArchInfo::N_VECTOR_UOPS> child_uops_;
 
         // Did this instruction mispredict?
         bool is_mispredicted_ = false;

@@ -18,6 +18,8 @@ top.cpu.core0:
     l1_size_kb: 64
 
 top.cpu.core0.extension.core_extensions:
+  vlen: 1024
+  dlen: 1024
   # this sets the pipe targets for each execution unit
   # you can set a multiple or just one:
   # ["int", "div"] would mean this execution pipe can accept

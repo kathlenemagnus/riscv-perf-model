@@ -1,0 +1,149 @@
+[
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x10",
+        "comment": "lmul=1, sew=32, vl=vlmax"
+    },
+    {
+        "mnemonic": "vrgather.vv",
+        "vs1": 8,
+        "vs2": 9,
+        "vd": 24
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x11",
+        "comment": "lmul=2, sew=32, vl=vlmax"
+    },
+    {
+        "mnemonic": "vrgather.vv",
+        "vs1": 8,
+        "vs2": 10,
+        "vd": 24
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x12",
+        "comment": "lmul=4, sew=32, vl=vlmax"
+    },
+    {
+        "mnemonic": "vrgather.vv",
+        "vs1": 8,
+        "vs2": 12,
+        "vd": 24
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x13",
+        "comment": "lmul=8, sew=32, vl=vlmax"
+    },
+    {
+        "mnemonic": "vrgather.vv",
+        "vs1": 8,
+        "vs2": 16,
+        "vd": 24
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0xc1",
+        "comment": "lmul=2, sew=8, vl=vlmax"
+    },
+    {
+        "mnemonic": "vrgather.vx",
+        "rs1": 31,
+        "vs2": 22,
+        "vd": 14
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 64,
+        "vtype": "0x51",
+        "comment": "lmul=2, sew=32, vl=64"
+    },
+    {
+        "mnemonic": "vrgather.vi",
+        "imm": 0,
+        "vs2": 12,
+        "vd": 22
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 512,
+        "vtype": "0x4b",
+        "comment": "lmul=8, sew=16, vl=512"
+    },
+    {
+        "mnemonic": "vrgatherei16.vv",
+        "vs1": 24,
+        "vs2": 16,
+        "vd": 8,
+        "comment": "eew == sew"
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 256,
+        "vtype": "0x53",
+        "comment": "lmul=8, sew=32, vl=256"
+    },
+    {
+        "mnemonic": "vrgatherei16.vv",
+        "vs1": 28,
+        "vs2": 16,
+        "vd": 8,
+        "comment": "eew * sew/2"
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 128,
+        "vtype": "0x5b",
+        "comment": "lmul=8, sew=64, vl=128"
+    },
+    {
+        "mnemonic": "vrgatherei16.vv",
+        "vs1": 24,
+        "vs2": 16,
+        "vd": 8,
+        "comment": "eew == sew/4"
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 512,
+        "vtype": "0x42",
+        "comment": "lmul=4, sew=8, vl=512"
+    },
+    {
+        "mnemonic": "vrgatherei16.vv",
+        "vs1": 24,
+        "vs2": 16,
+        "vd": 8,
+        "comment": "eew == 2*sew"
+    },
+    {
+        "mnemonic": "vsetivli",
+        "rd": 0,
+        "imm": 16,
+        "vtype": "0xc5",
+        "comment": "lmul=1/8, sew=8, vl=vlmax"
+    },
+    {
+        "mnemonic": "vrgatherei16.vv",
+        "vs1": 31,
+        "vs2": 23,
+        "vd": 15
+    }
+]

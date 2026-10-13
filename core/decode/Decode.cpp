@@ -1,6 +1,7 @@
 // <Decode.cpp> -*- C++ -*-
 
 #include "decode/Decode.hpp"
+#include "CoreUtils.hpp"
 #include "vector/VectorUopGenerator.hpp"
 #include "fsl_api/FusionTypes.h"
 
@@ -48,8 +49,7 @@ namespace olympia
         fusion_max_group_size_(p->fusion_max_group_size),
         fusion_summary_report_(p->fusion_summary_report),
         fusion_group_definitions_(p->fusion_group_definitions),
-        vector_enabled_(true),
-        vector_config_(new VectorConfig(p->init_vl, p->init_sew, p->init_lmul, p->init_vta)),
+        vlen_(coreutils::getCoreExtensions(node)->getParameterAs<uint32_t>("vlen")),
         vset_blocking_count_(&unit_stat_set_, "vset_blocking_count",
                              "Number of times that the Decode unit blocks execution",
                              sparta::Counter::COUNT_NORMAL),
@@ -71,11 +71,24 @@ namespace olympia
             CREATE_SPARTA_HANDLER_WITH_DATA(Decode, processVset_, InstPtr));
 
         sparta::StartupEvent(node, CREATE_SPARTA_HANDLER(Decode, sendInitialCredits_));
-    }
 
-    uint32_t Decode::getNumVecUopsRemaining() const
-    {
-        return vector_enabled_ ? vec_uop_gen_->getNumUopsRemaining() : 0;
+	// If vector is enabled
+        if (vlen_ != 0)
+        {
+            vec_global_config_.push_front(
+                {0,
+                 vector_types::VectorGlobalConfig(
+                     vlen_, p->init_vl, p->init_sew,
+                     p->init_lmul, p->init_vta, p->init_vma)});
+        }
+        else
+        {
+            p->init_vl.ignore();
+            p->init_sew.ignore();
+            p->init_lmul.ignore();
+            p->init_vta.ignore();
+            p->init_vma.ignore();
+        }
     }
 
     // Send fetch the initial credit count
@@ -134,37 +147,50 @@ namespace olympia
         }
     }
 
-    void Decode::updateVectorConfig_(const InstPtr & inst)
+    void Decode::updateVectorGlobalConfigFromVset_(const InstPtr & inst)
     {
-        vector_config_ = inst->getVectorConfig();
-
-        // If rs1 is x0 and rd is x0 then the vl is unchanged (assuming it is legal)
-        const uint64_t uid = inst->getOpCodeInfo()->getInstructionUniqueID();
-        if ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource())
-        {
-            const uint32_t new_vl = inst->hasZeroRegDest() ? std::min(vector_config_->getVL(),
-                                                                      vector_config_->getVLMAX())
-                                                           : vector_config_->getVLMAX();
-            vector_config_->setVL(new_vl);
-        }
-
-        ILOG("Processing vset{i}vl{i} instruction: " << inst << " " << vector_config_);
+        sparta_assert(inst->getVectorGlobalConfig() != nullptr,
+                      "vset inst missing vector config: " << inst);
+        ILOG("Processing vset{i}vl{i} instruction: " << inst->getVectorGlobalConfig() << " "
+                                                     << inst);
+        vec_global_config_.push_front({inst->getProgramID(), *inst->getVectorGlobalConfig()});
+        sparta_assert(vec_global_config_.size() < 100,
+                      "Somehow we have > 100 vector configs.  During a "
+                      "flush or a retire of vset, this should be drained");
     }
 
     // process vset settings being forward from execution pipe
     // for set instructions that depend on register
     void Decode::processVset_(const InstPtr & inst)
     {
-        updateVectorConfig_(inst);
-
-        // if rs1 != 0, VL = x[rs1], so we assume there's an STF field for VL
-        if (waiting_on_vset_)
+        if (inst->isBlockingVSET())
         {
+            DLOG("Received blocking vset: " << inst);
+            sparta_assert(blocking_vset_inst_.isValid(),
+                          "Decode received an unexpected vset: " << inst);
+            sparta_assert(blocking_vset_inst_.getValue() == inst,
+                          "Decode received an unexpected vset: " << inst);
+            inst->setBlockingVSET(false);
+            blocking_vset_inst_.clearValid();
+            updateVectorGlobalConfigFromVset_(inst);
+
             const auto vset_block_end = getClock()->currentCycle();
             vset_blocking_stall_latency_ += (vset_block_end - vset_block_start_);
             // schedule decode, because we've been stalled on vset
-            waiting_on_vset_ = false;
             ev_decode_insts_event_.schedule(sparta::Clock::Cycle(0));
+        }
+        else if (inst->getStatus() == Inst::Status::RETIRED)
+        {
+            DLOG("Received retired vset: " << inst);
+            const auto inst_arch_id = inst->getProgramID();
+            bool found = false;
+            while (vec_global_config_.back().first != inst_arch_id)
+            {
+                // Make this vset the oldest config
+                vec_global_config_.pop_back();
+                found = true;
+            }
+            sparta_assert(found, "Did not find vset in the vec_global_config: " << inst);
         }
     }
 
@@ -204,7 +230,7 @@ namespace olympia
         InstGroupPtr insts = sparta::allocate_sparta_shared_pointer<InstGroup>(instgroup_allocator);
         // if we have a waiting on vset followed by more instructions, we decode
         // vset and stall anything else
-        while ((insts->size() < num_to_decode) && !waiting_on_vset_)
+        while ((insts->size() < num_to_decode) && (blocking_vset_inst_.isValid() == false))
         {
             if (vec_uop_gen_->getNumUopsRemaining() > 0)
             {
@@ -230,7 +256,7 @@ namespace olympia
                 if ((uid == MAVIS_UID_VSETIVLI)
                     || ((uid == MAVIS_UID_VSETVLI) && inst->hasZeroRegSource()))
                 {
-                    updateVectorConfig_(inst);
+                    updateVectorGlobalConfigFromVset_(inst);
                 }
                 else if (uid == MAVIS_UID_VSETVLI || uid == MAVIS_UID_VSETVL)
                 {
@@ -238,18 +264,13 @@ namespace olympia
 
                     vset_block_start_ = getClock()->currentCycle();
                     // block for vsetvl or vsetvli when rs1 of vsetvli is NOT 0
-                    waiting_on_vset_ = true;
+		    sparta_assert(
+                        blocking_vset_inst_.isValid() == false,
+                        "Decode should NOT be stalled waiting on a blocking vset: " << inst);
+                    blocking_vset_inst_ = inst;
                     // need to indicate we want a signal sent back at execute
                     inst->setBlockingVSET(true);
                     ILOG("Decode stalled, Waiting on vset that has register dependency: " << inst)
-                }
-                else
-                {
-                    if (!inst->isVset() && inst->isVector())
-                    {
-                        // set LMUL, VSET, VL, VTA for any other vector instructions
-                        inst->setVectorConfig(vector_config_);
-                    }
                 }
 
                 ILOG("Decoded: " << inst);
@@ -329,7 +350,7 @@ namespace olympia
 
         // If we still have credits to send instructions as well as
         // instructions in the queue, schedule another decode session
-        if (uop_queue_credits_ > 0 && (fetch_queue_.size() + getNumVecUopsRemaining()) > 0)
+        if (uop_queue_credits_ > 0 && (fetch_queue_.size() + vec_uop_gen_->getNumUopsRemaining()) > 0)
         {
             ev_decode_insts_event_.schedule(1);
         }

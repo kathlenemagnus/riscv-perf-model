@@ -1,21 +1,26 @@
 
 #include "InstGenerator.hpp"
+
+#include "vector/VectorTypes.hpp"
+
 #include "mavis/Mavis.h"
 #include "mavis/JSONUtils.hpp"
+
 
 namespace olympia
 {
     std::unique_ptr<InstGenerator> InstGenerator::createGenerator(sparta::log::MessageSource & info_logger,
                                                                   MavisType* mavis_facade,
                                                                   const std::string & filename,
-                                                                  const bool skip_nonuser_mode)
+                                                                  const bool skip_nonuser_mode,
+								  const uint32_t vlen)
     {
         const std::string json_ext = "json";
         if ((filename.size() > json_ext.size())
             && filename.substr(filename.size() - json_ext.size()) == json_ext)
         {
             std::cout << "olympia: JSON file input detected" << std::endl;
-            return std::unique_ptr<InstGenerator>(new JSONInstGenerator(info_logger, mavis_facade, filename));
+            return std::unique_ptr<InstGenerator>(new JSONInstGenerator(info_logger, mavis_facade, filename, vlen));
         }
 
         const std::string stf_ext = "stf"; // Should cover both zstf and stf
@@ -24,7 +29,7 @@ namespace olympia
         {
             std::cout << "olympia: STF file input detected" << std::endl;
             return std::unique_ptr<InstGenerator>(
-                new TraceInstGenerator(info_logger, mavis_facade, filename, skip_nonuser_mode));
+                new TraceInstGenerator(info_logger, mavis_facade, filename, skip_nonuser_mode, vlen));
         }
 
         // Dunno what it is...
@@ -33,12 +38,52 @@ namespace olympia
         return nullptr;
     }
 
+    void InstGenerator::initVectorGlobalConfig_(const InstPtr & inst_ptr, const uint32_t vtype_val,
+                                                const uint32_t avl,
+                                                const bool set_vl_to_vlmax = false,
+                                                const bool set_vl_to_last_vl = false)
+    {
+        union Vtype
+        {
+            struct vtype_fields
+            {
+                uint32_t vlmul : 3;
+                uint32_t vsew : 3;
+                uint32_t vta : 1;
+                uint32_t vma : 1;
+                uint32_t reserved : 23;
+                uint32_t vill : 1;
+            } fields;
+
+            uint32_t vtype_val;
+        };
+
+        Vtype vtype{.vtype_val = vtype_val};
+        const uint32_t sew = std::pow(2, vtype.fields.vsew) * 8;
+        sparta_assert(vtype.fields.vlmul <= 7,
+                      "Invalid vlmul value extracted from vtype: 0x" << std::hex << vtype_val);
+        static const std::array<float, 8> vlmul_to_lmul = {1, 2,       4,       8,
+                                                           0, 1.0 / 8, 1.0 / 4, 1.0 / 2};
+        const float lmul = vlmul_to_lmul[vtype.fields.vlmul];
+
+        // Determine VLMAX to get VL from AVL
+        const uint32_t vlmax = (vlen_ / sew) * lmul;
+        const uint32_t vl = (set_vl_to_vlmax || (avl > vlmax)) ? vlmax
+                            : set_vl_to_last_vl                ? last_vl_
+                                                               : avl;
+
+        inst_ptr->setVectorGlobalConfig(vector_types::VectorGlobalConfig(
+            vlen_, vl, sew, lmul, vtype.fields.vta, vtype.fields.vma));
+        last_vl_ = vl;
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     // JSON Inst Generator
     JSONInstGenerator::JSONInstGenerator(sparta::log::MessageSource & info_logger,
                                          MavisType* mavis_facade,
-                                         const std::string & filename) :
-        InstGenerator(info_logger, mavis_facade)
+                                         const std::string & filename,
+					 const uint32_t vlen) :
+        InstGenerator(info_logger, mavis_facade, vlen)
     {
         std::ifstream fs;
         std::ios_base::iostate exceptionMask = fs.exceptions() | std::ios::failbit;
@@ -155,29 +200,25 @@ namespace olympia
                 inst->setTargetVAddr(vaddr);
             }
 
-            VectorConfigPtr vector_config = inst->getVectorConfig();
-            if (const auto it = jinst.find("vtype"); it != jinst.end())
+            if (inst->isVset())
             {
+                const auto vtype_it = jinst.find("vtype");
+                sparta_assert(vtype_it != jinst.end(), "Must specify vtype for vset instructions");
                 // immediate, so decode from hex
-                uint64_t vtype =
-                    std::strtoull(it->value().as_string().c_str(), nullptr, 0);
-                std::string binaryString = std::bitset<32>(vtype).to_string();
-                uint32_t sew = std::pow(2, std::stoi(binaryString.substr(26, 3), nullptr, 2)) * 8;
-                uint32_t lmul = std::pow(2, std::stoi(binaryString.substr(29, 3), nullptr, 2));
-                vector_config->setLMUL(lmul);
-                vector_config->setSEW(sew);
-            }
+                const uint32_t vtype = std::strtoull(vtype_it->value().as_string().c_str(), nullptr, 0);
 
-            if (const auto it = jinst.find("vta"); it != jinst.end())
-            {
-                const bool vta = boost::json::value_to<uint64_t>(it->value()) > 0 ? true : false;
-                vector_config->setVTA(vta);
-            }
-
-            if (const auto it = jinst.find("vl"); it != jinst.end())
-            {
-                const uint64_t vl = boost::json::value_to<uint64_t>(it->value());
-                vector_config->setVL(vl);
+                // vl is only required if vl != vlmax
+                const auto vl_it = jinst.find("vl");
+                if (vl_it != jinst.end())
+                {
+                    const uint32_t vl = vl_it->value().get_int64();
+                    initVectorGlobalConfig_(inst, vtype, vl);
+                }
+                else
+                {
+                    const bool set_vl_to_vlmax = true;
+                    initVectorGlobalConfig_(inst, vtype, 0, set_vl_to_vlmax);
+                }
             }
 
             if (const auto it = jinst.find("taken"); it != jinst.end())
@@ -199,8 +240,9 @@ namespace olympia
     TraceInstGenerator::TraceInstGenerator(sparta::log::MessageSource & info_logger,
                                            MavisType* mavis_facade,
                                            const std::string & filename,
-                                           const bool skip_nonuser_mode) :
-        InstGenerator(info_logger, mavis_facade)
+                                           const bool skip_nonuser_mode,
+					   const uint32_t vlen) :
+        InstGenerator(info_logger, mavis_facade, vlen)
     {
         std::ifstream fs;
         std::ios_base::iostate exceptionMask = fs.exceptions() | std::ios::failbit;

@@ -2,9 +2,9 @@
     {
         "mnemonic": "vsetivli",
         "imm": 32,
-        "vtype": "0x10",
         "rd": 0,
-        "vl": 32
+        "vtype": "0x10",
+        "comment": "lmul=1, sew=32, vl=vlmax"
     },
     {
         "mnemonic": "vadd.vv",
@@ -15,9 +15,9 @@
     {
         "mnemonic": "vsetivli",
         "imm": 33,
-        "vtype": "0x11",
         "rd": 0,
-        "vl": 64
+        "vtype": "0x11",
+        "comment": "lmul=2, sew=32, vl=vlmax"
     },
     {
         "mnemonic": "vadd.vv",
@@ -28,9 +28,9 @@
     {
         "mnemonic": "vsetivli",
         "imm": 34,
-        "vtype": "0x12",
         "rd": 0,
-        "vl": 128
+        "vtype": "0x12",
+        "comment": "lmul=4, sew=32, vl=vlmax"
     },
     {
         "mnemonic": "vadd.vv",
@@ -41,9 +41,9 @@
     {
         "mnemonic": "vsetivli",
         "imm": 35,
-        "vtype": "0x13",
         "rd": 0,
-        "vl": 256
+        "vtype": "0x13",
+        "comment": "lmul=8, sew=32, vl=vlmax"
     },
     {
         "mnemonic": "vadd.vv",

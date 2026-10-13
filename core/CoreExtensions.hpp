@@ -6,6 +6,8 @@
 #include <string>
 #include <memory>
 
+#include "vector/VectorUtils.hpp"
+
 #include "sparta/simulation/TreeNodeExtensions.hpp"
 #include "sparta/simulation/ParameterSet.hpp"
 
@@ -60,7 +62,16 @@ namespace olympia
                                                    "Topology Mapping"
                                                    "Mapping of Pipe Targets to execution unit",
                                                    ps));
-            issue_queue_to_pipe_map_.reset(
+            vlen_.reset(new sparta::Parameter<uint32_t>(
+                "vlen", 0, "Width of vector registers in bits (128, 256, 512, or 1024)", ps));
+            vlen_->addDependentValidationCallback(&CoreExtensions::validateVlen_,
+                                                  "VLEN constraint");
+
+            dlen_.reset(new sparta::Parameter<uint32_t>(
+                "dlen", 0, "Width of vector execution units in bits (must be <= VLEN)", ps));
+            dlen_->addDependentValidationCallback(&CoreExtensions::validateDlen_,
+                                                  "DLEN constraint");
+	    issue_queue_to_pipe_map_.reset(
                 new IssueQueueTopologyParam("issue_queue_to_pipe_map", IssueQueueTopology(),
                                             "Issue Queue Topology"
                                             "Defines Issue Queue to Execution Unit Mapping",
@@ -80,8 +91,30 @@ namespace olympia
       private:
         std::unique_ptr<ExecutionTopologyParam> execution_topology_;
         std::unique_ptr<PipeTopologyParam> pipelines_;
+        std::unique_ptr<sparta::Parameter<uint32_t>> vlen_;
+        std::unique_ptr<sparta::Parameter<uint32_t>> dlen_;
         std::unique_ptr<IssueQueueTopologyParam> issue_queue_to_pipe_map_;
         std::unique_ptr<PipeTopologyParam> exe_pipe_rename_;
         std::unique_ptr<PipeTopologyParam> issue_queue_rename_;
+ 
+	static bool validateVlen_(uint32_t & vlen_val, const sparta::TreeNode*)
+        {
+            // VLEN can be zero if vector is disabled
+            if (vlen_val == 0)
+            {
+                return true;
+            }
+            return vector_utils::isVlenValid(vlen_val);
+        };
+
+        static bool validateDlen_(uint32_t & dlen_val, const sparta::TreeNode*)
+        {
+            // DLEN can be zero if vector is disabled
+            if (dlen_val == 0)
+            {
+                return true;
+            }
+            return vector_utils::isDlenValid(dlen_val);
+        };
     };
 }

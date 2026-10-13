@@ -29,8 +29,8 @@ namespace core_test
             explicit SrcParameters(sparta::TreeNode* n) : sparta::ParameterSet(n) {}
 
             PARAMETER(std::string, test_type, "single", "Test mode to run: single or multiple")
-
             PARAMETER(std::string, input_file, "", "Input file: STF or JSON")
+            PARAMETER(uint32_t, vlen, 1024, "Width of vector registers in bits (128, 256, 512, or 1024)")
         };
 
         Src(sparta::TreeNode* n, const SrcParameters* params) :
@@ -44,8 +44,9 @@ namespace core_test
 
             if (params->input_file != "")
             {
+                constexpr bool SKIP_NONUSER_MODE = false;
                 inst_generator_ = olympia::InstGenerator::createGenerator(
-                    info_logger_, mavis_facade_, params->input_file, false);
+                    info_logger_, mavis_facade_, params->input_file, SKIP_NONUSER_MODE, params->vlen);
             }
         }
 

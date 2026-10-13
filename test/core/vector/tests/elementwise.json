@@ -2,10 +2,8 @@
   {
     "mnemonic": "vsetivli",
     "rd": 0,
-    "imm": 256,
     "vtype": "0x12",
-    "vl": 128,
-    "vta": 0
+    "comment": "lmul=4, sew=32, vl=vlmax"
   },
   {
     "mnemonic": "vadd.vv",
@@ -21,7 +19,7 @@
   },
   {
     "mnemonic": "vmul.vx",
-    "vd": 5,
+    "vd": 8,
     "vs2": 4,
     "rs1": 3
   }

@@ -1,0 +1,23 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "vtype": "0x12",
+    "comment": "lmul=4, sew=32, vl=vlmax"
+  },
+  {
+    "mnemonic": "vmv.v.v",
+    "vs1": 12,
+    "vd": 8
+  },
+  {
+    "mnemonic": "vmv.v.x",
+    "rs2": 10,
+    "vd": 8
+  },
+  {
+    "mnemonic": "vmv8r.v",
+    "vs2": 16,
+    "vd": 8
+  }
+]

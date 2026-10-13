@@ -1,0 +1,32 @@
+[
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "vtype": "0x12",
+    "comment": "lmul=4, sew=32, vl=vlmax"
+  },
+  {
+    "mnemonic": "vwmacc.vv",
+    "vd": 12,
+    "vs2": 4,
+    "vs1": 8
+  },
+  {
+    "mnemonic": "vsetivli",
+    "rd": 0,
+    "vtype": "0x10",
+    "comment": "lmul=1, sew=32, vl=vlmax"
+  },
+  {
+    "mnemonic": "vwmaccu.vx",
+    "vd": 12,
+    "vs2": 4,
+    "rs1": 1
+  },
+  {
+    "opcode": "0xf0a3e657",
+    "mask": "0x33333333",
+    "comment": "vwmaccu.vx v12,x7,v10,v0.t",
+    "comment": "Mavis::makeInstDirectly will not use the V_implied xform"
+  }
+]

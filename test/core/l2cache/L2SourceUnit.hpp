@@ -30,6 +30,7 @@ namespace l2cache_test
             { }
             PARAMETER(bool, unit_enable, true, "Is this unit enabled?")
             PARAMETER(std::string, input_file, "", "Input file: STF or JSON")
+            PARAMETER(uint32_t, vlen, 1024, "Width of vector registers in bits (128, 256, 512, or 1024)")
             PARAMETER(sparta::Clock::Cycle, delay_btwn_insts, 50, "Clock delay between instruction/requests to L2Cache")
         };
 
@@ -47,7 +48,8 @@ namespace l2cache_test
                 (CREATE_SPARTA_HANDLER_WITH_DATA(L2SourceUnit, ReceiveCredits_, uint32_t));
 
             if(params->input_file != "") {
-                inst_generator_ = olympia::InstGenerator::createGenerator(info_logger_, mavis_facade_, params->input_file, false);
+                constexpr bool SKIP_NONUSER_MODE = false;
+                inst_generator_ = olympia::InstGenerator::createGenerator(info_logger_, mavis_facade_, params->input_file, SKIP_NONUSER_MODE, params->vlen);
             }
 
             if (unit_enable_ == true)

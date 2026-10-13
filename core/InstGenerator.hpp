@@ -32,15 +32,17 @@ namespace olympia
     class InstGenerator
     {
     public:
-        InstGenerator(sparta::log::MessageSource & info_logger, MavisType * mavis_facade) :
+        InstGenerator(sparta::log::MessageSource & info_logger, MavisType * mavis_facade, const uint32_t vlen) :
             info_logger_(info_logger),
-            mavis_facade_(mavis_facade) {}
+            mavis_facade_(mavis_facade),
+	    vlen_(vlen) {}
         virtual ~InstGenerator() {}
         virtual InstPtr getNextInst(const sparta::Clock * clk) = 0;
         static std::unique_ptr<InstGenerator> createGenerator(sparta::log::MessageSource & info_logger,
                                                               MavisType * mavis_facade,
                                                               const std::string & filename,
-                                                              const bool skip_nonuser_mode);
+                                                              const bool skip_nonuser_mode,
+							      const uint32_t vlen);
         virtual bool isDone() const = 0;
         virtual void reset(const InstPtr &, const bool) = 0;
 
@@ -49,6 +51,13 @@ namespace olympia
         MavisType * mavis_facade_ = nullptr;
         uint64_t    unique_id_ = 0;
         uint64_t    program_id_ = 1;
+
+	// Vector
+	const uint32_t vlen_;
+        uint32_t last_vl_ = 0;
+	void initVectorGlobalConfig_(const InstPtr & inst_ptr, const uint32_t vtype_val,
+                                     const uint32_t avl, const bool set_vl_to_vlmax,
+                                     const bool set_vl_to_last_vl);
     };
 
     // Generates instructions from a JSON file
@@ -57,7 +66,8 @@ namespace olympia
     public:
         JSONInstGenerator(sparta::log::MessageSource & info_logger,
                           MavisType * mavis_facade,
-                          const std::string & filename);
+                          const std::string & filename,
+			  const uint32_t vlen);
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 
         bool isDone() const override final;
@@ -80,7 +90,8 @@ namespace olympia
         TraceInstGenerator(sparta::log::MessageSource & info_logger,
                            MavisType * mavis_facade,
                            const std::string & filename,
-                           const bool skip_nonuser_mode);
+                           const bool skip_nonuser_mode,
+			   const uint32_t vlen);
 
         InstPtr getNextInst(const sparta::Clock * clk) override final;
 

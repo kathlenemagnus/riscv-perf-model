@@ -481,3 +481,24 @@ olympia::CPUTopology::allocateTopology(const std::string & topology)
     sparta_assert(nullptr != new_topology);
     return new_topology;
 }
+
+void olympia::CPUTopology::bindTree(sparta::RootTreeNode* root_node)
+{
+    auto core_extension = root_node->createExtension(olympia::CoreExtensions::name);
+    auto core_extension_params = sparta::notNull(core_extension)->getParameters();
+
+    const auto vlen = core_extension_params->getParameterValueAs<uint32_t>("vlen");
+    std::cout << "VLEN: " << vlen << std::endl;
+    if (vlen != 0)
+    {
+        const auto dlen = core_extension_params->getParameterValueAs<uint32_t>("dlen");
+
+        sparta_assert(dlen != 0, "If VLEN is set, DLEN must also be set. VLEN: "
+                                     << std::dec << vlen << " DLEN: " << dlen);
+        sparta_assert(vlen >= dlen, "VLEN must be larger than DLEN. VLEN: " << std::dec << vlen
+                                                                            << " DLEN: " << dlen);
+        sparta_assert(std::has_single_bit(vlen / dlen),
+                      "VLEN/DLEN ratio is not a power of 2. VLEN: " << std::dec << vlen
+                                                                    << " DLEN: " << dlen);
+    }
+}
